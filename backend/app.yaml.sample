@@ -1,11 +1,11 @@
-runtime: python27
-api_version: 1
-threadsafe: yes
+runtime: python312
+app_engine_apis: true
+
+
 
 skip_files:
-- elgrillo-pfa.appspot.com/
 - .vscode/
-- .vs/
+- docs/
 - obj/
 - data/
 - ^(.*/)?#.*#$
@@ -33,14 +33,4 @@ handlers: # static then dynamic
   script: main.app
   login: required
   auth_fail_action: redirect
-  
 
-libraries:
-- name: futures
-  version: "3.0.5"
-- name: enum
-  version: "0.9.23"
-- name: jinja2
-  version: "2.6"
-- name: markupsafe
-  version: "0.15"
