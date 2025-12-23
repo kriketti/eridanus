@@ -1,5 +1,5 @@
 from flask import Blueprint, make_response, render_template, session
-from StringIO import StringIO
+from io import BytesIO
 from zipfile import ZipFile
 from .services import ExportDataService, ImportDataServices
 
@@ -20,7 +20,7 @@ def _zip(file, data_streams):
 
 
 def _zip_in_memory(data_streams):
-    file = StringIO()
+    file = BytesIO()
     return _zip(file, data_streams)
 
 
@@ -34,10 +34,10 @@ def export(format):
     service = ExportDataService()
     username = session['nickname']
     data = {}
-    data['run'] = service.get_run_data(format, username)
-    data['weight'] = service.get_weight_data(format, username)
+    data['run'] = service.get_run_data(username, format)
+    data['weight'] = service.get_weight_data(username, format)
     zip_stream = _zip_in_memory(data)
-    response = make_response(zip_stream.read())
+    response = make_response(zip_stream.getvalue())
     response.headers["Content-Disposition"] = 'attachment;' \
         + 'filename=eridanus_data.zip'
     response.headers['Cache-Control'] = 'no-cache'
@@ -54,5 +54,5 @@ def import_index(folder):
     data = service.import_from_csv(folder, username)
     response = make_response()
     response.headers['Content-Type'] = 'text/plain'
-    response.write(data)
+    response.set_data(str(data))
     return response

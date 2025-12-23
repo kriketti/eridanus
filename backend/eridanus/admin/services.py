@@ -1,9 +1,8 @@
 from ..utils import to_date, to_time, to_datetime
-from google.appengine.api import app_identity
-from StringIO import StringIO
+from google.cloud import storage
+from io import StringIO
 
 import csv
-import cloudstorage as gcs
 import os
 import eridanus.repository as repository
 
@@ -64,30 +63,34 @@ class ImportDataServices(object):
 
     def import_from_csv(self, folder, username):
         audit = {}
-        default_bucket = self._get_default_bucket()
-        audit['default_bucket'] = default_bucket
-        if default_bucket:
-            import_folder = "/" + default_bucket + '/import/' + folder
-            # self._import_run_csv(import_folder)
-            self._import_weight_csv(import_folder)
+        bucket = self._get_default_bucket()
+        audit['default_bucket'] = bucket.name if bucket else None
+        if bucket:
+            import_folder = 'import/' + folder
+            # self._import_run_csv(bucket, import_folder)
+            self._import_weight_csv(bucket, import_folder)
+        return audit
 
     def _get_default_bucket(self):
-        bucket_name = os.environ.get(
-            'BUCKET_NAME',
-            app_identity.get_default_gcs_bucket_name())
-        return bucket_name
+        bucket_name = os.environ.get('BUCKET_NAME')
+        if not bucket_name:
+            project_id = os.environ.get('GOOGLE_CLOUD_PROJECT')
+            if project_id:
+                bucket_name = project_id + '.appspot.com'
+        if not bucket_name:
+            return None
+        client = storage.Client()
+        return client.bucket(bucket_name)
 
-    def _read_file(self, filename):
-        gcs_file = gcs.open(filename)
-        contents = gcs_file.read()
-        gcs_file.close()
-        return contents
+    def _read_file(self, bucket, filename):
+        blob = bucket.blob(filename)
+        return blob.download_as_bytes()
 
-    def _import_run_csv(self, import_folder):
+    def _import_run_csv(self, bucket, import_folder):
         audit = {}
         filename = import_folder + '/run.csv'
-        content = self._read_file(filename)
-        stream = StringIO(content)
+        content = self._read_file(bucket, filename)
+        stream = StringIO(content.decode('utf-8'))
         csvReader = csv.DictReader(stream, dialect='excel')
         for row in csvReader:
             repo = repository.RunRepository()
@@ -115,10 +118,10 @@ class ImportDataServices(object):
         audit['filename'] = filename
         return audit
 
-    def _import_weight_csv(self, import_folder):
+    def _import_weight_csv(self, bucket, import_folder):
         filename = import_folder + '/weight.csv'
-        content = self._read_file(filename)
-        stream = StringIO(content)
+        content = self._read_file(bucket, filename)
+        stream = StringIO(content.decode('utf-8'))
         csvReader = csv.DictReader(stream, dialect='excel')
         for row in csvReader:
             repo = repository.WeightRepository()

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, session
 # from flask.ext.login import login_required
-from services import DashboardService
+from .services import DashboardService
 
 
 dashboard = Blueprint('dashboard', __name__, template_folder='templates')

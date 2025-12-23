@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import IntegerField, DateField, DecimalField, \
-    TextField, TextAreaField
+    StringField, TextAreaField
 # from wtforms_components import TimeField
 from wtforms.validators import DataRequired
 from datetime import datetime
@@ -10,11 +10,11 @@ class ActivityForm(FlaskForm):
     activity_date = DateField(
         label='activity_date',
         default=datetime.now(),
-        validators=[DataRequired])
-    activity_time = TextField(
+        validators=[DataRequired()])
+    activity_time = StringField(
         label='activity_time',
         default=datetime.now().time().strftime('%I:%M %p'),
-        validators=[DataRequired])
+        validators=[DataRequired()])
     duration = IntegerField()
     calories = IntegerField()
     notes = TextAreaField()
@@ -29,5 +29,5 @@ class PushupForm(ActivityForm):
 
 
 class RunningForm(ActivityForm):
-    time = IntegerField(validators=[DataRequired])
-    distance = DecimalField(validators=[DataRequired])
+    time = IntegerField(validators=[DataRequired()])
+    distance = DecimalField(validators=[DataRequired()])

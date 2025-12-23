@@ -1,0 +1,13 @@
+.gcloudignore
+.git
+.venv/
+.vscode/
+docs/
+obj/
+data/
+__pycache__/
+*.pyc
+*.pyo
+*~
+README.md
+CONTRIB.md

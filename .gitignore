@@ -3,6 +3,8 @@ app.yaml
 .vs
 .tern-project
 
+backend/.venv
+
 
 # Created by https://www.gitignore.io/api/visualstudiocode
 
@@ -125,3 +127,4 @@ app.yaml
 .settings/
 .pydevproject
 .project
+backend/.venv/pyvenv.cfg
