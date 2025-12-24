@@ -1,4 +1,5 @@
 .gcloudignore
+.env
 .git
 .venv/
 .vscode/

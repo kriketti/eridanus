@@ -85,7 +85,8 @@ def check_authentication():
     if 'nickname' not in session:
         email = _resolve_user_email()
         if email and _is_allowed_email(email):
-            session['nickname'] = email
+            session['user_email'] = email
+            session['nickname'] = email.split('@', 1)[0]
         else:
             abort(401)
 

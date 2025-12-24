@@ -1,24 +1,14 @@
 runtime: python312
-app_engine_apis: true
+entrypoint: gunicorn -b :$PORT main:app
 
-
-
-skip_files:
-- .vscode/
-- docs/
-- obj/
-- data/
-- ^(.*/)?#.*#$
-- ^(.*/)?.*~$
-- ^(.*/)?.*\.py[co]$
-- ^(.*/)?\..*$
-- README.md
-- CONTRIB.md
+env_variables:
+  ALLOWED_USER_EMAIL: "user@example.com"
+  DEV_USER_EMAIL: "user@example.com"
 
 handlers: # static then dynamic
 - url: /favicon\.ico
-  static_files: favicon.ico
-  upload: favicon\.ico
+  static_files: static/app/favicon.ico
+  upload: static/app/favicon\.ico
   
 - url: /css
   static_dir: static/css
@@ -30,7 +20,5 @@ handlers: # static then dynamic
   static_dir: static/download
 
 - url: .*
-  script: main.app
-  login: required
-  auth_fail_action: redirect
+  script: auto
 

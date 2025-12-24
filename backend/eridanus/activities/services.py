@@ -113,7 +113,8 @@ class RunningService(CrudService):
                 records['max_time'] = item['duration']
             if records['max_speed'] < item['speed']:
                 records['max_speed'] = item['speed']
-            if records['max_calories'] < item['calories']:
+            if item['calories'] is not None and \
+                    records['max_calories'] < item['calories']:
                 records['max_calories'] = item['calories']
         return records
 
