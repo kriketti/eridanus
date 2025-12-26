@@ -31,7 +31,7 @@
 
 {% for item in vm['items'] %}
 <div class="detail">
-    {{ item.activity_date }}  {{ item.activity_time }}<br />
+    <a href="/activities/running/edit/{{ item.id }}">{{ item.activity_date }}  {{ item.activity_time }}</a><br />
     <strong class="value"> {{ item.duration }}</strong> min
     {% if item.duration == vm['records']['max_time'] %}
     <span class="glyphicon glyphicon-star" aria-hidden="true" style="color:yellowgreen;"></span>

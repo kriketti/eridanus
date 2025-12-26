@@ -29,9 +29,10 @@
                     </div>
                     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                         <ul class="nav navbar-nav">
-                        	<li><a href="/activities/crunches/">Crunches</a></li>
-                            <li><a href="/activities/running/">Running</a></li>
+                            <li><a href="/activities/crunches/">Crunches</a></li>
+                            <li><a href="/activities/jump_rope/">Jump rope</a></li>
                             <li><a href="/activities/pushups/">Push-ups</a></li>
+                            <li><a href="/activities/running/">Running</a></li>
                             <li><a href="/weighings/">Weight</a></li>
                             <li><a href="/admin">Admin</a></li>
                             <li><span class="navbar-text">Signed in as {{ session['nickname'] }}</span></li>
@@ -39,7 +40,6 @@
                     </div>
                 </div>
             </nav>
-        	
             {% endblock %}
         </div>
         <div id="content" class="container-fluid">{% block content %}{% endblock %}</div>

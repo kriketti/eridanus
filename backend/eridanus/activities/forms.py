@@ -27,7 +27,9 @@ class CrunchesForm(ActivityForm):
 class PushupForm(ActivityForm):
     count = IntegerField()
 
-
 class RunningForm(ActivityForm):
     time = IntegerField(validators=[DataRequired()])
     distance = DecimalField(validators=[DataRequired()])
+
+class JumpRopeForm(ActivityForm):
+    count = IntegerField()

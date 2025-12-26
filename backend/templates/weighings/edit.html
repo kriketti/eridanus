@@ -1,0 +1,20 @@
+{% extends '/layout/base.html' %}
+{% block title %}Eridanus::Weight{% endblock %}
+{% block header %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+<h1>Weight</h1>
+<form method="post" action="{{ url_for('weighings.edit', id=id) }}">
+    {{ form.csrf_token }}
+    <div class="form-group">
+        <label for="weighing_date">Weighting Date</label>
+        {{ form.weighing_date(class_="form-control", type="date", required="required") }}
+    </div>
+    <div class="form-group">
+        <label for="weight">Weight (kg)</label>
+        {{ form.weight(class_="form-control", type="number", placeholder="Enter weight", step="0.1", min=0) }}
+    </div>
+    <button type="submit">Submit</button>
+</form>
+{% endblock %}

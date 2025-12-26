@@ -1,9 +1,14 @@
+import logging
+
 from datetime import datetime
 from flask import Blueprint, flash, redirect, \
     render_template, request, session, url_for
-from ..forms import PushupForm
-from ..services import PushupsService
+from flask_login import login_required
+from eridanus.activities.forms import PushupForm
+from eridanus.activities.services import PushupsService
+from eridanus.utils.format import to_time
 
+logger = logging.getLogger(__name__)
 
 pushup_activities = Blueprint(
     'pushup_activities',
@@ -19,45 +24,43 @@ def _validate_form(form):
 
 @pushup_activities.route("/")
 @pushup_activities.route("/list/")
+@login_required
 def index():
     username = session['nickname']
-    if username:
-        items = service.fetch_all(username)
-        return render_template(
-            'activities/pushups/index.html', viewmodel={'items': items})
-    else:
-        # TODO: redirect to the authentication page
-        pass
+    items = service.fetch_all(username)
+    return render_template(
+        'activities/pushups/index.html', viewmodel={'items': items})
 
 
 @pushup_activities.route("/create/", methods=['GET', 'POST'])
+@login_required
 def create():
-    if request.method == 'POST':
-        form = PushupForm()
-        if _validate_form(form):
-            service.create({
-                'activity_date': form.activity_date.data,
-                'activity_time': datetime.strptime(
-                    form.activity_time.data,
-                    '%H:%M'
-                    ).time(),
-                'calories': form.calories.data,
-                'count': form.count.data,
-                'duration': form.duration.data,
-                'notes': form.notes.data,
-                'user_nickname': session['nickname']
-                })
-            flash('Push-ups activity "%s" created successfully.', 'success')
-            return redirect(url_for('pushup_activities.index'), 302)
-    else:
-        form = PushupForm()
-        return render_template('activities/pushups/create.html', form=form)
+    error_message = None
+    form = PushupForm()
+    try:
+        if request.method == 'POST':
+            if _validate_form(form):
+                service.create({
+                    'activity_date': form.activity_date.data,
+                    'activity_time': to_time(form.activity_time.data,'%H:%M'),
+                    'calories': form.calories.data,
+                    'count': form.count.data,
+                    'duration': form.duration.data,
+                    'notes': form.notes.data,
+                    'usernickname': session['nickname']
+                    })
+                flash('Push-ups activity "%s" created successfully.', 'success')
+                return redirect(url_for('pushup_activities.index'), 302)
+    except (ValueError, Exception) as exc:
+        error_message = str(exc)
+        logger.exception(error_message)
+    logger.debug(form)
+    return render_template('activities/pushups/create.html', form=form, error_message=error_message)
 
 
 @pushup_activities.route('/<activity_id>/', methods=['GET', 'POST'])
 def view(activity_id):
-    ''' REVIEW: TEST: TODO: '''
-    activity = service.fetch(activity_id)
+    activity = service.read(activity_id)
     if activity:
         return render_template('activities/pushups/view.html', activity)
     else:
@@ -65,47 +68,39 @@ def view(activity_id):
 
 
 @pushup_activities.route("/<activity_id>/edit", methods=['GET', 'POST'])
+@login_required
 def edit(activity_id):
-    ''' REVIEW: review this method as is not fully implemented,
-    is just a stub
-    '''
     if request.method == 'POST':
         form = PushupForm()
         if _validate_form(form):
             service.update({
                 'activity_id': activity_id,
                 'activity_date': form.activity_date.data,
-                'activity_time': datetime.strptime(
+                'activity_time': to_time(
                     form.activity_time.data,
                     '%H:%M'
-                    ).time(),
+                    ),
                 'calories': form.calories.data,
                 'count': form.count.data,
                 'duration': form.duration.data,
                 'notes': form.notes.data,
-                'user_nickname': session['nickname']
+                'usernickname': session['nickname']
             })
             flash('Push-ups activity "%s" saved successfully.', 'success')
             return redirect(url_for('pushup_activities.index'), 302)
-        else:
-            pass
-    else:
-        activity = service.fetch(activity_id)
-        if activity:
-            form = PushupForm()
-            form.activity_date = activity['activity_date']
-            return render_template(
-                'activities/pushups/edit.html',
-                form=form)
-        else:
-            pass  # TODO: if None then return 404 .first_or_404()
+    activity = service.read(activity_id)
+    if activity:
+        form = PushupForm()
+        form.activity_date = activity['activity_date']
+        return render_template(
+            'activities/pushups/edit.html',
+            form=form)
+    error = {'message': f"Push-ups activity was not found for id {activity_id}"}
+    return page_not_found(error)
 
 
 @pushup_activities.route("/<activity_id>/delete/", methods=['POST'])
 def delete(activity_id):
-    ''' REVIEW: review this method as is not fully implemented,
-    is just a stub
-    '''
     service.delete(activity_id)
     flash('Push-ups activity "%s" saved successfully.', 'success')
     return redirect(url_for('pushup_activities.index'), 302)
@@ -113,5 +108,4 @@ def delete(activity_id):
 
 @pushup_activities.errorhandler(404)
 def page_not_found(e):
-    return 'Sorry, nothing at this URL.', 404
-    # TODO: return render_template('pages/404.html')
+    return render_template('pages/404.html', error=e)

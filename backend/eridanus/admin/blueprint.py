@@ -1,4 +1,5 @@
 from flask import Blueprint, make_response, render_template, session
+from flask_login import login_required
 from io import BytesIO
 from zipfile import ZipFile
 from .services import ExportDataService, ImportDataServices
@@ -25,11 +26,13 @@ def _zip_in_memory(data_streams):
 
 
 @admin.route('/', methods=['GET'])
+@login_required
 def index():
         return render_template('admin/home.html')
 
 
 @admin.route('/export/<format>/', methods=['GET'])
+@login_required
 def export(format):
     service = ExportDataService()
     username = session['nickname']
@@ -48,6 +51,7 @@ def export(format):
 
 
 @admin.route('/import/<folder>', methods=['GET'])
+@login_required
 def import_index(folder):
     service = ImportDataServices()
     username = session['nickname']

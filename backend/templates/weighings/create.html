@@ -5,16 +5,14 @@
 {% endblock %}
 {% block content %}
 <h1>Weight</h1>
-<form method="post" action="/weighings/create/">
+<form method="post" action=" {{ url_for('weighings.create') }}">
     {{ form.csrf_token }}
     <div class="form-group">
         <label for="weighing_date">Weighting Date</label>
-        <!--<input id="date" type="date" class="form-control" required="required">-->
         {{ form.weighing_date(class_="form-control", type="date", required="required") }}
     </div>
     <div class="form-group">
         <label for="weight">Weight (kg)</label>
-        <!--<input type="number" class="form-control" id="weight" required="required" />-->
         {{ form.weight(class_="form-control", type="number", placeholder="Enter weight", step="0.1", min=0) }}
     </div>
     <button type="submit">Submit</button>

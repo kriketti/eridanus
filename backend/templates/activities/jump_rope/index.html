@@ -1,0 +1,56 @@
+{% extends "/layout/base.html" %}
+{% block title %}Push-ups{% endblock %}
+{% block head %}
+{{ super() }}
+<style>
+    div.detail {
+        font-size: 12px;
+        line-height: 1;
+        padding: 4px;
+        margin: 4px 0px;
+        color: dimgray;
+    }
+
+    strong.date {
+    }
+
+    strong.value {
+        color: #000;
+    }
+</style>
+{% endblock %}
+{% block header %}
+{{ super() }}
+{% endblock %}
+{% block content%}
+<h1>Jump rope</h1>
+<div>
+    <a href="/activities/jump_rope/create/" class="btn btn-default active" role="button">
+        <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>  Add
+    </a>
+</div>
+
+{% for item in viewmodel['items'] %}
+<div class="detail">
+    {{ item.activity_date }} {{ item.activity_time }}
+    {% if item.duration %}
+    <br />
+    <strong class="value">{{ item.duration }}</strong> min
+    {% endif %}
+    {% if item.count %}
+    <br />
+    <strong class="value">{{ item.count }}</strong> jumps
+    {% endif %}
+    {% if item.calories is not none %}
+    <br />
+    Calories: <strong class="value">{{ item.calories }}</strong> kcal
+    {% endif %}
+</div>
+{% endfor %}
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript">
+
+</script>
+{% endblock %}

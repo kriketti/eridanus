@@ -1,0 +1,17 @@
+{% extends "/layout/base.html" %}
+{% block title %} Not found {% endblock %}
+{% block head %}
+{{ super() }}
+
+{% endblock %}
+{% block header %}
+{{ super() }}
+{% endblock %}
+{% block content%}
+    <h1>The page was not found</h1>
+
+    <p>{{ error['message'] }}</p>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+{% endblock %}

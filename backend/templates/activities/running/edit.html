@@ -1,0 +1,81 @@
+{% extends '/layout/base.html' %}
+{% block title %}Eridanus::Run{% endblock %}
+{% block header %}
+    {{ super() }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js" integrity="sha256-owX7sroiO/O1a7h3a4X29A1g3QgqdNvijRQ7V5TH45M=" crossorigin="anonymous"></script>
+{% endblock %}
+{% block content %}
+	<h1>Running exercise</h1>
+    <form action="/activities/running/edit/{{ id }}/" method="post">
+        {{ form.csrf_token }}
+        <div class="form-group">
+            <label for="activity_date">Activity Date</label>
+            {{ form.activity_date(class_="form-control", type="date", required="required") }}
+        </div>
+        <div class="form-group">
+            <label for="activity_time">Activity Time</label>
+            <input id="activity_time" name="activity_time" class="form-control" required="required" value="{{ form.activity_time.data }}" type="time">
+        </div>
+        <div class="form-group">
+            <label for="duration">Time (min)</label>
+            {{ form.duration(class_="form-control", type="number", placeholder="Enter time", required="required", **{'data-bind': 'initFromInput:duration, value: duration'}) }}
+        </div>
+        <div class="form-group">
+            <label for="distance">Distance (km)</label>
+            {{ form.distance(class_="form-control", type="number", placeholder="Enter distance", required="required", step="0.1", min=0,  **{'data-bind': 'initFromInput:distance, value: distance'}) }}
+        </div>
+        <div style="font-weight: bold;">
+            Speed <span data-bind="text: speed" style="color:#ff0000"></span> hm/h
+        </div>
+        <div class="form-group">
+            <label for="calories">Calories (kcal)</label>
+            {{ form.calories(class_="form-control", type="number", placeholder="Enter calories") }}
+        </div>
+        <div class="form-group">
+            <label for="notes">Notes (max: 200 chars)</label>
+            {{ form.notes(class_="form-control", type="text", placeholder="Enter Notes", multiple="multiple", maxlength="200") }}
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+    </form>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+    <script type="text/javascript">
+        function isUndefinedOrEmpty(text) {
+            if (text == undefined || text === "") {
+                return true;
+            }
+            return false;
+        } 
+
+        function RunViewModel() {
+            this.duration = ko.observable();
+            this.distance = ko.observable();
+
+            this.speed = ko.computed(function () {
+                if (isUndefinedOrEmpty(this.duration())) {
+                    return "--";
+                }
+                if (isUndefinedOrEmpty(this.distance())) {
+                    return "--";
+                }
+                var duration = parseFloat(this.duration());
+                var distance = parseFloat(this.distance());
+                var speed = parseFloat(distance / (duration / 60)).toFixed(2);
+
+                console.log('Time: ' + duration + ', Distance: ' + distance + ', Speed: ' + speed);
+
+                return speed;
+            }, this);
+        }
+
+        ko.bindingHandlers.initFromInput = {
+            // https://stackoverflow.com/questions/34696141/how-to-applybindings-and-keep-input-values-with-knockout-js
+            init: function(element, valueAccessor) {
+                valueAccessor()(element.value);
+            }
+        };
+
+        ko.applyBindings(new RunViewModel());
+    </script>
+{% endblock %}

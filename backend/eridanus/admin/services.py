@@ -1,4 +1,4 @@
-from ..utils import to_date, to_time, to_datetime
+from ..utils.format import to_date, to_time, to_datetime
 from google.cloud import storage
 from io import StringIO
 
@@ -15,33 +15,33 @@ class ExportDataService(object):
 
     def get_run_data(self, username, format):
         repo = repository.RunRepository()
-        items = repo.fetch_all(username)
+        items = repo.fetch_by_username(username)
         stream = StringIO()
         fieldnames = ['usernickname', 'activity_date', 'activity_time',
-                      'time', 'distance', 'speed', 'calories', 
+                      'duration', 'distance', 'speed', 'calories', 
                       'notes', 'creation_datetime']
         csvwriter = csv.DictWriter(
                         stream,
                         fieldnames=fieldnames,
                         dialect='excel')
         csvwriter.writeheader()
-        for item in items:
+        for model in items:
             csvwriter.writerow({
-                'usernickname': item.usernickname, 
-                'activity_date': item.activity_date,
-                'activity_time': item.activity_item,
-                'duration': item.duration,
-                'distance': item.distance,
-                'speed': item.speed,
-                'calories': item.calories,
-                'notes': item.notes,
-                'creation_datetime': item.creation_datetime
+                'usernickname': model.get('usernickname'), 
+                'activity_date': model.get('activity_date'),
+                'activity_time': model.get('activity_item'),
+                'duration': model.get('duration', ''),
+                'distance': model.get('distance', ''),
+                'speed': model.get('speed', ''),
+                'calories': model.get('calories', ''),
+                'notes': model.get('notes', ''),
+                'creation_datetime': model.get('creation_datetime')
                 })
         return stream.getvalue()
 
     def get_weight_data(self, username, format):
         repo = repository.WeightRepository()
-        items = repo.fetch_all(username)
+        items = repo.fetch_by_username(username)
         stream = StringIO()
         csvwriter = csv.writer(stream, dialect='excel')
         fieldnames = ['usernickname', 'weight', 'creation_datetime']
@@ -52,9 +52,9 @@ class ExportDataService(object):
         csvwriter.writeheader()
         for item in items:
             csvwriter.writerow({
-                'usernickname': item.usernickname,
-                'weight': item.weight,
-                'creation_datetime': item.creation_datetime
+                'usernickname': item.get('usernickname'),
+                'weight': item.get('weight'),
+                'creation_datetime': item.get('creation_datetime')
                 })
         return stream.getvalue()
 

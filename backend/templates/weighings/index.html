@@ -26,13 +26,13 @@
 {% block content %}
 <h1>Weight</h1>
 
-<a href="/weighings/create/" class="btn btn-default active">
+<a href="{{ url_for('weighings.create') }}" class="btn btn-default active">
     <span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span> Add
 </a>
 
 {% for item in vm['items'] %}
 <div class="detail">
-    {{item['weighing_date']}}<br />
+    <a href="{{ url_for('weighings.edit', id=item['id']) }}">{{item['weighing_date']}}</a><br />
     <strong class="value">{{item['weight']}}</strong> kg 
     {% if vm['min_weight'] and vm['min_weight'] == item['weight'] %}
     <span class="glyphicon glyphicon-star" aria-hidden="true" style="color:yellowgreen;"></span>

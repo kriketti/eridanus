@@ -1,24 +1,30 @@
-from ..utils import format_date, format_time
+import logging
+
+from ..utils.format import format_date, format_time
 from ..services import CrudService
+from ..repository import CrunchesRepository, JumpRopeRepository, PushUpsRepository, RunRepository
 
 
-class CrunchesService(CrudService):
+logger = logging.getLogger(__name__)
 
-    def __init__(self):
-        from eridanus.repository import CrunchesRepository
-        self.repository = CrunchesRepository()
+class BaseActivityService(CrudService):
+
+    def __init__(self, repository):
+        self.repository = repository
 
     def fetch_all(self, username):
         items = []
-        models = self.repository.fetch_all(username)
+        models = self.repository.fetch_by_username(username, order=['-activity_date'])
         if models is not None:
             for model in models:
-                item = {'activity_time': format_time(model.activity_time),
-                        'activity_date': format_date(model.activity_date),
-                        'count': model.count,
-                        'calories': model.calories,
-                        'duration': model.duration,
-                        'notes': model.notes}
+                item = {'activity_time': format_time(model['activity_time']),
+                        'activity_date': format_date(model['activity_date']),
+                        'count': model['count'],
+                        'calories': model['calories'],
+                        'duration': model['duration'],
+                        'notes': model['notes'],
+                        'id': model.key.id
+                        }
                 items.append(item)
         return items
 
@@ -34,70 +40,52 @@ class CrunchesService(CrudService):
     def delete(self, activity_id):
         return self.repository.delete(activity_id)
 
-
-class PushupsService(CrudService):
-    ''' Push-ups controller '''
+class CrunchesService(BaseActivityService):
 
     def __init__(self):
-        from eridanus.repository import PushUpsRepository
-        self.repository = PushUpsRepository()
+        super(CrunchesService, self).__init__(CrunchesRepository())
 
-    def fetch_all(self, username):
-        ''' creates and returns the view and viewmodel '''
-        items = []
-        models = self.repository.fetch_all(username)
-        if models is not None:
-            for model in models:
-                item = {'activity_time': format_time(model.activity_time),
-                        'activity_date': format_date(model.activity_date),
-                        'count': model.count,
-                        'calories': model.calories,
-                        'duration': model.duration,
-                        'notes': model.notes}
-                items.append(item)
-        return items
+class JumpRopeService(BaseActivityService):
 
-    def create(self, activity):
-        self.repository.create(activity)
+    def __init__(self):
+        super(JumpRopeService, self).__init__(JumpRopeRepository())
 
-    def read(self, activity_id):
-        return NotImplemented
+class PushupsService(BaseActivityService):
 
-    def update(self, activity):
-        return NotImplemented
-
-    def delete(self, activity_id):
-        return NotImplemented
+    def __init__(self):
+        super(PushupsService, self).__init__(PushUpsRepository())
 
 
 class RunningService(CrudService):
 
-    def __init__(self):
-        from eridanus.repository import RunRepository
+    def __init__(self, repository=None):
         self.repository = RunRepository()
 
     def fetch_all(self, username):
-        items = self._fetch(username)
+        items = self._fetch_all(username)
         records = self._compute_records(items)
         return {'items': items, 'records': records}
 
-    def _fetch(self, username):
+    def _fetch_all(self, username):
         items = []
-        models = self.repository.fetch_all(username)
+        models = self.repository.fetch_by_username(username, order=['-activity_date'])
         for model in models:
-            duration = model.duration
+            print(str(model))
+            duration = model['duration']
             speed = 'N/A'
-            if model.speed:
-                speed = model.speed
+            if 'speed' in model:
+                speed = model['speed']
             else:
-                speed = model.distance / (duration / 60.0)
+                speed = model['distance'] / (duration / 60.0)
 
             item = {'duration': duration,
-                    'distance': model.distance,
+                    'distance': model['distance'],
                     'speed': speed,
-                    'activity_date': format_date(model.activity_date),
-                    'activity_time': format_time(model.activity_time),
-                    'calories': model.calories}
+                    'activity_date': format_date(model['activity_date']),
+                    'activity_time': format_time(model['activity_time']),
+                    'calories': model['calories'],
+                    'id': model.key.id
+                    }
             items.append(item)
         return items
 
@@ -111,10 +99,9 @@ class RunningService(CrudService):
                 records['max_distance'] = item['distance']
             if records['max_time'] < item['duration']:
                 records['max_time'] = item['duration']
-            if records['max_speed'] < item['speed']:
+            if item['speed'] and records['max_speed'] < item['speed']:
                 records['max_speed'] = item['speed']
-            if item['calories'] is not None and \
-                    records['max_calories'] < item['calories']:
+            if item['calories'] and records['max_calories'] < item['calories']:
                 records['max_calories'] = item['calories']
         return records
 
@@ -122,10 +109,11 @@ class RunningService(CrudService):
         self.repository.create(activity)
 
     def read(self, activity_id):
-        return NotImplemented
+        logging.info(f'Read running entity having id {activity_id}')
+        return self.repository.read(activity_id)
 
     def update(self, activity):
-        return NotImplemented
+        self.repository.update(activity)
 
     def delete(self, activity_id):
-        return NotImplemented
+        self.repository.delete(activity_id)

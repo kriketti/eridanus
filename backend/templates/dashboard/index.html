@@ -37,41 +37,51 @@
 {% block content%}
 <h1>Stats</h1>
 
-<input id="weighing_growth_rate_last20" type="hidden" value="{{stats['weighing']['growth_rate_last20']}}" />
-<input id="days_from_last_running_activity" type="hidden" value="{{stats['activities']['running']['days_from_last_run']}}" />
-<div class="panel panel-default">
-    <div class="panel-body stats-panel">
-        <p>Weight: <span class="stats-number">{{stats['weighing']['last_weight']}}</span> kg &nbsp;&nbsp; 
-        <span id="weighing_status" class="label"> {{'{:+0.2f} %'.format(stats['weighing']['growth_rate_last20']) }}</span> </p>
-        <p>Avg weight 20 days: <span class="stats-number">{{'{:0.1f}'.format(stats['weighing']['avg_last20'])}}</span> kg</p>
-        <p>Last run date: <span class="stats-number">{{stats['activities']['running']['date_last_run']}}</span> 
-        <span id="running_status" class="label">{{ stats['activities']['running']['days_from_last_run'] }} days ago</span></p>
-        <p>Count run: <span class="stats-number">{{stats['activities']['running']['count']}}</span> </p>
+{% if stats %}
+    <input id="weighing_growth_rate_last20" type="hidden" value="{{stats['weighing']['growth_rate_last20']}}" />
+    <input id="days_from_last_running_activity" type="hidden" value="{{stats['activities']['running']['days_from_last_run']}}" />
+    <div class="panel panel-default">
+        Your BMI is <strong>{{'{:.1f}'.format(stats['bmi']['bmi'])}}</strong> - <strong>{{stats['bmi']['status']}}</strong>
     </div>
-</div>
-<div class="panel panel-default">
-    <div class="panel-body stats-panel">
-        <p>Max Distance: <span class="stats-number">{{stats['activities']['running']['max_distance']}}</span> km</p>
-        <p>Max Time: <span class="stats-number">{{stats['activities']['running']['max_time']}}</span> minutes</p>
-        <p>Max Speed: <span class="stats-number">{{'{0:.2f}'.format(stats['activities']['running']['max_speed'])}}</span> km/h</p>
-        <p>Max Calories: <span class="stats-number">{{stats['activities']['running']['max_calories']}}</span></p>
+    <div class="panel panel-default">
+        <div class="panel-body stats-panel">
+            <p>Weight: <span class="stats-number">{{stats['weighing']['last_weight']}}</span> kg &nbsp;&nbsp; 
+            <span id="weighing_status" class="label"> {{'{:+0.2f} %'.format(stats['weighing']['growth_rate_last20']) }}</span> </p>
+            <p>Desired weight: <span class="stats-number">{{'{:.1f}'.format(stats['objectives']['weight'])}}</span> kg</p>
+            <p>Avg weight 20 days: <span class="stats-number">{{'{:0.1f}'.format(stats['weighing']['avg_last20'])}}</span> kg</p>
+            <p>Last run date: <span class="stats-number">{{stats['activities']['running']['date_last_run']}}</span> 
+            <span id="running_status" class="label">{{ stats['activities']['running']['days_from_last_run'] }} days ago</span></p>
+            <p>Count run: <span class="stats-number">{{stats['activities']['running']['count']}}</span> </p>
+        </div>
     </div>
-</div>
-<div class="panel panel-default">
-    <div class="panel-body stats-panel">
-        <p>Total Distance: <span class="stats-number">{{stats['activities']['running']['total_distance']}}</span> km</p>
-        <p>Total Time: <span class="stats-number">{{stats['activities']['running']['total_time']}}</span> minutes</p>
-        <p>Total Calories: <span class="stats-number">{{stats['activities']['running']['total_calories']}}</span></p>
+    <div class="panel panel-default">
+        <div class="panel-body stats-panel">
+            <p>Max Distance: <span class="stats-number">{{stats['activities']['running']['max_distance']}}</span> km</p>
+            <p>Max Time: <span class="stats-number">{{stats['activities']['running']['max_time']}}</span> minutes</p>
+            <p>Max Speed: <span class="stats-number">{{'{0:.2f}'.format(stats['activities']['running']['max_speed'])}}</span> km/h</p>
+            <p>Max Calories: <span class="stats-number">{{stats['activities']['running']['max_calories']}}</span></p>
+        </div>
     </div>
-</div>
-<div class="panel panel-default">
-    <div class="panel-body stats-panel">
-        <!--<h5><strong>Averages</strong></h5>-->
-        <p>Avg Distance: <span class="stats-number">{{'{0:.2f}'.format(stats['activities']['running']['avg_distance'])}}</span> km</p>
-        <p>Avg Time: <span class="stats-number">{{stats['activities']['running']['avg_time']}}</span> minutes</p>
-        <p>Avg Speed: <span class="stats-number">{{'{0:.2f}'.format(stats['activities']['running']['avg_speed'])}}</span> km/h</p>
+    <div class="panel panel-default">
+        <div class="panel-body stats-panel">
+            <p>Total Distance: <span class="stats-number">{{'{:,}'.format(stats['activities']['running']['total_distance'])}}</span> km</p>
+            <p>Total Time: <span class="stats-number">{{'{:,}'.format(stats['activities']['running']['total_time'])}}</span> minutes</p>
+            <p>Total Calories: <span class="stats-number">{{'{:,}'.format(stats['activities']['running']['total_calories'])}}</span></p>
+        </div>
     </div>
-</div>
+    <div class="panel panel-default">
+        <div class="panel-body stats-panel">
+            <!--<h5><strong>Averages</strong></h5>-->
+            <p>Avg Distance: <span class="stats-number">{{'{0:.2f}'.format(stats['activities']['running']['avg_distance'])}}</span> km</p>
+            <p>Avg Time: <span class="stats-number">{{'{:.0f}'.format(stats['activities']['running']['avg_time'])}}</span> minutes</p>
+            <p>Avg Speed: <span class="stats-number">{{'{0:.2f}'.format(stats['activities']['running']['avg_speed'])}}</span> km/h</p>
+        </div>
+    </div>
+{% elif error_message %}
+    <p>There are some errors {{error_message}}</p>
+{% else %}
+    <p>No data, do some activities</p>
+{% endif %}
 {% endblock %}
 {% block scripts %}
 {{ super() }}

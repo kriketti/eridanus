@@ -1,8 +1,13 @@
+import logging
+
 from flask import Blueprint, flash, render_template, \
     redirect, request, session, url_for
+from flask_login import login_required
 from .forms import WeightForm
+from ..utils.form import validate_form
 from .services import WeighingService
 
+logger = logging.getLogger(__name__)
 
 weighings = Blueprint("weighings", __name__, template_folder='templates')
 service = WeighingService()
@@ -13,18 +18,70 @@ service = WeighingService()
 def index():
     username = session['nickname']
     items = service.fetch_all(username)
+    logger.debug(f'Received the following items: {items}')
     return render_template('weighings/index.html', vm=items)
 
 
 @weighings.route("/create/", methods=['GET', 'POST'])
+@login_required
 def create():
+    error_message = None
     form = WeightForm()
-    if form.validate_on_submit():
-        service.create({
-            'user_nickname': session['nickname'],
-            'weight': float(form.weight.data),
-            'weighing_date': form.weighing_date.data
-        })
-        flash('Weighing record created successfully.', 'success')
-        return redirect(url_for('weighings.index'))
-    return render_template('weighings/create.html', form=form)
+    try:
+        if request.method == 'POST':
+            logger.debug(f'Received a POST request with data: {form}')
+            if (validate_form(form)):
+                username = session['nickname']
+                service.create({
+                    'usernickname': username,
+                    'weight': float(0.0 if form.weight.data is None else form.weight.data),
+                    'weighing_date': form.weighing_date.data
+                })
+                flash('Weighing record "%s" created successfully.', 'success')
+                logger.debug('Trying to redirect to weighings.index')
+                return redirect(url_for('weighings.index'), 302)
+    except (ValueError, Exception) as exc:
+        error_message = str(exc)
+        logger.exception(error_message)
+    logger.debug(form)
+    return render_template(
+        'weighings/create.html',
+        form=form,
+        error_message=error_message)
+
+
+@weighings.route("/edit/<id>/", methods=['GET', 'POST'])
+def edit(id):
+    error_message = None
+    form = WeightForm()
+    try:
+        if request.method == 'POST':
+            if (validate_form(form)):
+                service.update({
+                    'weight': float(form.weight.data),
+                    'weighing_date': form.weighing_date.data,
+                    'id': id
+                })
+                flash('Weighing record "%s" created successfully.', 'success')
+                return redirect(url_for('weighings.index'), 302)
+        else:
+            model = service.read(id)
+            logger.debug(f'Got an weighting record: {model}')
+            if not model:
+                error = {}
+                error['message'] = f"Running activity was not found for id {id}"
+                return page_not_found(error)
+            form.weighing_date.data = model['weighing_date']
+            form.weight.data = model['weight']
+    except ValueError as exc:
+        error_message = str(exc)
+    return render_template(
+        'weighings/edit.html',
+        id=id,
+        form=form,
+        error_message=error_message)
+
+
+@weighings.errorhandler(404)
+def page_not_found(e):
+    return render_template('pages/404.html', error=e)
