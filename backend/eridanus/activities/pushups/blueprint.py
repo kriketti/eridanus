@@ -62,7 +62,7 @@ def create():
 def view(activity_id):
     activity = service.read(activity_id)
     if activity:
-        return render_template('activities/pushups/view.html', activity)
+        return render_template('activities/pushups/view.html', activity=activity)
     else:
         return redirect(url_for('app.page_not_found', 302))
 
@@ -74,7 +74,7 @@ def edit(activity_id):
         form = PushupForm()
         if _validate_form(form):
             service.update({
-                'activity_id': activity_id,
+                'id': activity_id,
                 'activity_date': form.activity_date.data,
                 'activity_time': to_time(
                     form.activity_time.data,
@@ -91,7 +91,7 @@ def edit(activity_id):
     activity = service.read(activity_id)
     if activity:
         form = PushupForm()
-        form.activity_date = activity['activity_date']
+        form.activity_date.data = activity['activity_date']
         return render_template(
             'activities/pushups/edit.html',
             form=form)

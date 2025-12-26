@@ -75,7 +75,7 @@ def _resolve_user_email():
     email = _get_iap_email()
     if email:
         return email
-    if app.config.get('DEBUG') and dev_user_email:
+    if _is_local_dev() and app.config.get('DEBUG') and dev_user_email:
         return dev_user_email
     return None
 
@@ -84,6 +84,10 @@ def _is_allowed_email(email):
     if not allowed_user_email:
         return False
     return email.lower() == allowed_user_email.lower()
+
+
+def _is_local_dev():
+    return os.environ.get("GAE_ENV") != "standard"
 
 
 @app.before_request

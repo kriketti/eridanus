@@ -100,7 +100,7 @@ def edit(id):
                 error = {'message': f"Running activity was not found for id {id}"}
                 return page_not_found(error)
             form.activity_date.data = model['activity_date']
-            form.activity_time.data = model['activity_time'].strftime('%I:%M')
+            form.activity_time.data = model['activity_time'].strftime('%H:%M')
             form.duration.data = model['duration']
             form.calories.data = model['calories']
             form.distance.data = model['distance']

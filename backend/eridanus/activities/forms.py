@@ -13,7 +13,7 @@ class ActivityForm(FlaskForm):
         validators=[DataRequired()])
     activity_time = StringField(
         label='activity_time',
-        default=datetime.now().time().strftime('%I:%M %p'),
+        default=datetime.now().time().strftime('%H:%M'),
         validators=[DataRequired()])
     duration = IntegerField()
     calories = IntegerField()

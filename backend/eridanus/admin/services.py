@@ -29,7 +29,7 @@ class ExportDataService(object):
             csvwriter.writerow({
                 'usernickname': model.get('usernickname'), 
                 'activity_date': model.get('activity_date'),
-                'activity_time': model.get('activity_item'),
+                'activity_time': model.get('activity_time'),
                 'duration': model.get('duration', ''),
                 'distance': model.get('distance', ''),
                 'speed': model.get('speed', ''),
@@ -102,7 +102,7 @@ class ImportDataServices(object):
             else:
                 speed = distance / (duration / 60.0)
             repo.create({
-                'user_nickname': row['usernickname'],
+                'usernickname': row['usernickname'],
                 'activity_date': to_date(
                     row['activity_date'], IMPORT_DATE_FORMAT),
                 'activity_time': to_time(
@@ -126,7 +126,7 @@ class ImportDataServices(object):
         for row in csvReader:
             repo = repository.WeightRepository()
             repo.create({
-                'user_nickname': row['usernickname'],
+                'usernickname': row['usernickname'],
                 'weight': float(row['weight']),
                 'weighing_date': to_date(
                     row['creation_datetime'], IMPORT_DATETIME_FORMAT),

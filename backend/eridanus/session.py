@@ -1,17 +1,10 @@
 import logging
 from flask import Flask, redirect, render_template, request, url_for, session
-from config import LOGGING_FORMAT
 
 from google.auth.transport import requests
 import google.oauth2.id_token
 
-loggingLevel = logging.DEBUG
 logger = logging.getLogger(__name__)
-logger.setLevel(loggingLevel)
-console = logging.StreamHandler()
-console.setLevel(loggingLevel)
-console.setFormatter(logging.Formatter(LOGGING_FORMAT))
-logger.addHandler(console)
 
 firebase_request_adapter = requests.Request()
 
