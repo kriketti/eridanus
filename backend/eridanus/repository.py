@@ -145,7 +145,7 @@ class StatisticsRepository(Repository):
 
 
         repository = RunRepository()
-        items = repository.fetch_by_username(username)
+        items = repository.fetch_by_username(username, order=['-activity_date'])
         count = 0
         for item in items:
             if count == 0:
@@ -215,7 +215,7 @@ class StatisticsRepository(Repository):
         total_last20 = 0.0
 
         repository = WeightRepository()
-        items = repository.fetch_by_username(username)
+        items = repository.fetch_by_username(username, order=['-weighing_date'])
         count = 0
         for item in items:
             if count == 0:
