@@ -29,7 +29,7 @@ def create():
     form = WeightForm()
     try:
         if request.method == 'POST':
-            logger.debug(f'Received a POST request with data: {form}')
+            logger.info(f'Received a POST request with data: {form}')
             if (validate_form(form)):
                 username = session['nickname']
                 service.create({
@@ -38,12 +38,10 @@ def create():
                     'weighing_date': form.weighing_date.data
                 })
                 flash('Weighing record "%s" created successfully.', 'success')
-                logger.debug('Trying to redirect to weighings.index')
                 return redirect(url_for('weighings.index'), 302)
     except (ValueError, Exception) as exc:
         error_message = str(exc)
         logger.exception(error_message)
-    logger.debug(form)
     return render_template(
         'weighings/create.html',
         form=form,

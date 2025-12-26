@@ -27,9 +27,9 @@ def configure_logging():
                 }
             },
             "loggers": {
-                "eridanus": {"level": "DEBUG", "propagate": True},
-                "main": {"level": "DEBUG", "propagate": True},
-                "__main__": {"level": "DEBUG", "propagate": True},
+                "eridanus": {"level": "INFO", "propagate": True},
+                "main": {"level": "INFO", "propagate": True},
+                "__main__": {"level": "INFO", "propagate": True},
                 "werkzeug": {"level": "INFO", "propagate": True},
             },
             "root": {"level": level_name, "handlers": ["stdout"]},

@@ -196,7 +196,6 @@ class StatisticsRepository(Repository):
         return float(total)/float(count)
 
     def _days_from_last_run(self, date_last_run):
-        logger.debug(date_last_run)
         if date_last_run:
             diff = abs(datetime.now().date() - date_last_run.date())
             return diff.days
