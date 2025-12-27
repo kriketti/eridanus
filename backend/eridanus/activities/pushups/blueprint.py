@@ -1,13 +1,11 @@
 import logging
 
-from datetime import datetime
 from flask import Blueprint, flash, redirect, \
     render_template, request, session, url_for
 from flask_login import login_required
 from eridanus.activities.forms import PushupForm
 from eridanus.activities.services import PushupsService
 from eridanus.utils.format import to_time
-from eridanus.utils.form import validate_form
 
 logger = logging.getLogger(__name__)
 
@@ -35,17 +33,17 @@ def create():
     form = PushupForm()
     try:
         if request.method == 'POST':
-            if validate_form(form):
+            if form.validate():
                 service.create({
                     'activity_date': form.activity_date.data,
-                    'activity_time': to_time(form.activity_time.data,'%H:%M'),
+                    'activity_time': to_time(form.activity_time.data),
                     'calories': form.calories.data,
                     'count': form.count.data,
                     'duration': form.duration.data,
                     'notes': form.notes.data,
                     'usernickname': session['nickname']
                     })
-                flash('Push-ups activity "%s" created successfully.', 'success')
+                flash('Push-ups activity created successfully.', 'success')
                 return redirect(url_for('pushup_activities.index'), 302)
     except (ValueError, Exception) as exc:
         error_message = str(exc)
@@ -68,31 +66,27 @@ def view(id):
 def edit(id):
     if request.method == 'POST':
         form = PushupForm()
-        if validate_form(form):
+        if form.validate():
             service.update({
                 'id': id,
                 'activity_date': form.activity_date.data,
-                'activity_time': to_time(
-                    form.activity_time.data,
-                    '%H:%M'
-                    ),
+                'activity_time': to_time(form.activity_time.data),
                 'calories': form.calories.data,
                 'count': form.count.data,
                 'duration': form.duration.data,
-                'notes': form.notes.data,
-                'usernickname': session['nickname']
+                'notes': form.notes.data
             })
-            flash('Push-ups activity "%s" saved successfully.', 'success')
+            flash(f'Push-ups activity saved successfully.', 'success')
             return redirect(url_for('pushup_activities.index'))
     activity = service.read(id)
     if activity:
         form = PushupForm()
-        form.activity_date.data = activity['activity_date']
-        form.activity_time.data = activity['activity_time'].strftime('%H:%M')
-        form.calories.data = activity['calories']
-        form.count.data = activity['count']
-        form.duration.data = activity['duration']
-        form.notes.data = activity['notes'] 
+        form.activity_date.data = activity.activity_date
+        form.activity_time.data = activity.activity_time.strftime('%H:%M')
+        form.calories.data = activity.calories
+        form.count.data = activity.count
+        form.duration.data = activity.duration
+        form.notes.data = activity.notes
         return render_template(
             'activities/pushups/edit.html',
             id=id,

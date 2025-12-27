@@ -5,15 +5,13 @@ from flask import Blueprint, flash, \
 from flask_login import login_required
 from ..forms import CrunchesForm
 from ..services import CrunchesService
-from eridanus.utils.format import date_to_datetime, to_time, time_to_datetime
-from eridanus.utils.form import validate_form
+from eridanus.utils.format import to_time
 
 logger = logging.getLogger(__name__)
 
 crunches = Blueprint('crunches', __name__, template_folder='templates')
 service = CrunchesService()
-
-
+           
 @crunches.route('/', methods=['GET'])
 @crunches.route('/list/', methods=['GET'])
 @login_required
@@ -33,17 +31,26 @@ def create():
     form = CrunchesForm()
     try:
         if request.method == 'POST':
-            if validate_form(form):
-                service.create({
+            if form.validate():
+                # Start with required fields
+                crunch_data = {
                     'activity_date': form.activity_date.data,
-                    'activity_time': to_time(form.activity_time.data, '%H:%M'),
-                    'duration': form.duration.data,
-                    'calories': form.calories.data,
-                    'count': form.count.data,
-                    'notes': form.notes.data,
+                    'activity_time': to_time(form.activity_time.data),
                     'usernickname': session['nickname']
-                })
-                flash('Activity "%s" created successfully.', 'success')
+                }
+                
+                # Conditionally add optional fields only if they have a value
+                if form.duration.data is not None:
+                    crunch_data['duration'] = form.duration.data
+                if form.calories.data is not None:
+                    crunch_data['calories'] = form.calories.data
+                if form.count.data is not None:
+                    crunch_data['count'] = form.count.data
+                if form.notes.data:
+                    crunch_data['notes'] = form.notes.data
+
+                service.create(crunch_data)
+                flash('Activity created successfully.', 'success')
                 return redirect(url_for('crunches.index'))
     except (ValueError, Exception) as exc:
         error_message = str(exc)
@@ -59,19 +66,17 @@ def edit(id):
     
     if request.method == 'POST':
         try:
-            if validate_form(form):
+            if form.validate():
                 service.update({
                     'id': id,
                     'activity_date': form.activity_date.data,
-                    'activity_date': form.activity_date.data,
-                    'activity_time': to_time(form.activity_time.data, '%H:%M'),
+                    'activity_time': to_time(form.activity_time.data),
                     'duration': form.duration.data,
                     'calories': form.calories.data,
                     'count': form.count.data,
-                    'notes': form.notes.data,
-                    'usernickname': session['nickname']
+                    'notes': form.notes.data
                 })
-            flash('Activity "%s" saved successfully.', 'success')
+            flash(f'Activity saved successfully.', 'success')
             return redirect(url_for('crunches.index'))
         except (ValueError, Exception) as exc:
             error_message = str(exc)
@@ -83,12 +88,12 @@ def edit(id):
     activity = service.read(id)
     if activity:
         form = CrunchesForm()
-        form.activity_date.data = activity['activity_date']
-        form.activity_time.data = activity['activity_time'].strftime('%H:%M')
-        form.calories.data = activity['calories']
-        form.count.data = activity['count']
-        form.duration.data = activity['duration']
-        form.notes.data = activity['notes']
+        form.activity_date.data = activity.activity_date
+        form.activity_time.data = activity.activity_time.strftime('%H:%M')
+        form.calories.data = activity.calories
+        form.count.data = activity.count
+        form.duration.data = activity.duration
+        form.notes.data = activity.notes
         return render_template(
             'activities/crunches/edit.html',
             id=id,
@@ -100,6 +105,3 @@ def edit(id):
 @crunches.errorhandler(404)
 def page_not_found(e):
     return render_template('pages/404.html', error=e)
-
-
-

@@ -3,8 +3,9 @@ import logging
 from flask import Blueprint, flash, render_template, \
     redirect, request, session, url_for
 from flask_login import login_required
+
+from ..models import Weight
 from .forms import WeightForm
-from ..utils.form import validate_form
 from .services import WeighingService
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ def create():
     try:
         if request.method == 'POST':
             logger.info(f'Received a POST request with data: {form}')
-            if (validate_form(form)):
+            if (form.validate()):
                 username = session['nickname']
                 service.create({
                     'usernickname': username,
@@ -38,7 +39,7 @@ def create():
                     'weighing_date': form.weighing_date.data
                 })
                 flash('Weighing record "%s" created successfully.', 'success')
-                return redirect(url_for('weighings.index'), 302)
+                return redirect(url_for('weighings.index'))
     except (ValueError, Exception) as exc:
         error_message = str(exc)
         logger.exception(error_message)
@@ -54,23 +55,23 @@ def edit(id):
     form = WeightForm()
     try:
         if request.method == 'POST':
-            if (validate_form(form)):
+            if (form.validate()):
                 service.update({
                     'weight': float(form.weight.data),
                     'weighing_date': form.weighing_date.data,
                     'id': id
                 })
                 flash('Weighing record "%s" created successfully.', 'success')
-                return redirect(url_for('weighings.index'), 302)
+                return redirect(url_for('weighings.index'))
         else:
             model = service.read(id)
             logger.debug(f'Got an weighting record: {model}')
             if not model:
                 error = {}
-                error['message'] = f"Running activity was not found for id {id}"
+                error['message'] = f"Weighing record was not found for id {id}"
                 return page_not_found(error)
-            form.weighing_date.data = model['weighing_date']
-            form.weight.data = model['weight']
+            form.weighing_date.data = model.weighing_date
+            form.weight.data = model.weight
     except ValueError as exc:
         error_message = str(exc)
     return render_template(

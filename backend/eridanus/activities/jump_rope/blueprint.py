@@ -5,8 +5,7 @@ from flask import Blueprint, flash, redirect, \
 from flask_login import login_required
 from eridanus.activities.forms import JumpRopeForm
 from eridanus.activities.services import JumpRopeService
-from eridanus.utils.form import validate_form
-from eridanus.utils.format import to_time, format_time
+from eridanus.utils.format import to_time
 
 
 logger = logging.getLogger(__name__)
@@ -37,17 +36,17 @@ def create():
     form = JumpRopeForm()
     try:
         if request.method == 'POST':
-            if validate_form(form):
+            if form.validate():
                 service.create({
                     'activity_date': form.activity_date.data,
-                    'activity_time': to_time(form.activity_time.data,'%H:%M'),
+                    'activity_time': to_time(form.activity_time.data),
                     'calories': form.calories.data,
                     'count': form.count.data,
                     'duration': form.duration.data,
                     'notes': form.notes.data,
                     'usernickname': session['nickname']
                     })
-                flash('Jump rope activity "%s" created successfully.', 'success')
+                flash('Jump rope activity created successfully.', 'success')
                 return redirect(url_for('jump_rope_activities.index'))
     except (ValueError, Exception) as exc:
         error_message = str(exc)
@@ -71,28 +70,27 @@ def view(id):
 def edit(id):
     form = JumpRopeForm()
     if request.method == 'POST':
-        if validate_form(form):
+        if form.validate():
             service.update({
                 'id': id,
                 'activity_date': form.activity_date.data,
-                'activity_time': to_time(form.activity_time.data,'%H:%M'),
+                'activity_time': to_time(form.activity_time.data),
                 'calories': form.calories.data,
                 'count': form.count.data,
                 'duration': form.duration.data,
-                'notes': form.notes.data,
-                'user_nickname': session['nickname']
+                'notes': form.notes.data
             })
-            flash('Jump rope activity "%s" saved successfully.', 'success')
+            flash('Jump rope activity saved successfully.', 'success')
             return redirect(url_for('jump_rope_activities.index'))
     activity = service.read(id)
     if activity:
         form = JumpRopeForm()
-        form.activity_date.data = activity['activity_date']
-        form.activity_time.data = activity['activity_time'].strftime('%H:%M')
-        form.calories.data = activity['calories']
-        form.count.data = activity['count']
-        form.duration.data = activity['duration']
-        form.notes.data = activity['notes']
+        form.activity_date.data = activity.activity_date
+        form.activity_time.data = activity.activity_time.strftime('%H:%M')
+        form.calories.data = activity.calories
+        form.count.data = activity.count
+        form.duration.data = activity.duration
+        form.notes.data = activity.notes
         return render_template(
             'activities/jump_rope/edit.html',
             id=id,

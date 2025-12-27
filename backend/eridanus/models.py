@@ -24,7 +24,6 @@ class Run(Activity):
     distance = ndb.FloatProperty()
     # speed = ndb.ComputedProperty(lambda self: self.distance/(self.time/60))
     speed = ndb.FloatProperty()
-    notes = ndb.StringProperty()
 
 
 class PushUp(Activity):

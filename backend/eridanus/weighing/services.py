@@ -1,6 +1,7 @@
 import logging
 
 from eridanus.repository import WeightRepository
+from eridanus.models import Weight
 from ..services import CrudService
 from ..utils.format import format_date
 
@@ -14,16 +15,21 @@ class WeighingService(CrudService):
     def fetch_all(self, username):
         min_weight = None
         items = []
-        models = self.repository.fetch_by_username(username, order = ['-weighing_date'])
+        # Use the NDB model property for ordering
+        models = self.repository.fetch_by_username(username, order=[-Weight.weighing_date])
+        
         for model in models:
-            if min_weight is None or min_weight > model['weight']:
-                min_weight = model['weight']
-            items.append(
-                {
-                    'id': model.key.id,
-                    'weight': model['weight'],
-                    'weighing_date': format_date(model['weighing_date'])
-                })
+            # Access attributes directly on the model object
+            if model.weight is not None:
+                if min_weight is None or min_weight > model.weight:
+                    min_weight = model.weight
+            
+            items.append({
+                # Use the id() method to get the numeric/string identifier
+                'id': model.key.id(),
+                'weight': model.weight,
+                'weighing_date': format_date(model.weighing_date)
+            })
         return {'items': items, 'min_weight': min_weight}
 
     def create(self, weighing):

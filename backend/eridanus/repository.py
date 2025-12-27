@@ -1,252 +1,232 @@
 import logging
+from datetime import datetime
+from google.cloud import ndb
 
-from datetime import datetime, date, time
-
-from eridanus.models import Crunch, Run, Weight, PushUp
-from eridanus.utils.format import format_date
-
-from google.cloud import datastore
-from google.cloud.datastore.query import PropertyFilter
-from typing import Dict, Any
+from eridanus.models import Crunch, Run, Weight, PushUp, JumpingRope
 
 logger = logging.getLogger(__name__)
 
 
 class Repository(object):
-    def __init__(self):
-        self.client = datastore.Client()
+    """
+    Base repository class. It's empty because NDB context management
+    is handled globally in main.py, not per-repository instance.
+    """
+    pass
+
 
 class CrudRepository(Repository):
+    """
+    A generic repository providing CRUD (Create, Read, Update, Delete)
+    operations for any NDB model.
+    """
 
-    def __init__(self, kind):
+    def __init__(self, model_class):
+        """
+        Initializes the repository for a specific model class.
+        :param model_class: The NDB model class (e.g., Weight, Run).
+        """
         super(CrudRepository, self).__init__()
-        self.kind = kind
-
-    def query(self):
-        return self.client.query(kind=self.kind)
-
-    def _key(self, identifier=None) -> datastore.Key:
-        if not identifier:
-            return self.client.key(self.kind)
-        # Dacă identificatorul este un string numeric, îl convertim în int (ID)
-        if isinstance(identifier, str) and identifier.isdigit():
-            return self.client.key(self.kind, int(identifier))
-        return self.client.key(self.kind, identifier)
-
-    def _sanitize_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
-        for key, value in record.items():
-            if isinstance(value, date) and not isinstance(value, datetime):
-                record[key] = datetime.combine(value, datetime.min.time())
-            elif isinstance(value, time):
-                record[key] = datetime.combine(date(1970, 1, 1), value)
-        return record
+        self.model_class = model_class
 
     def create(self, record):
-        logger.debug(f'Creating record of kind {self.kind}: {record}')
-        # https://cloud.google.com/datastore/docs/concepts/entities
-        record = self._sanitize_record(record)
-        with self.client.transaction():
+        """
+        Creates and saves a new entity from a dictionary.
+        """
+        logger.debug(f'Creating record of kind {self.model_class.__name__}: {record}')
+        
+        # Add the creation datetime automatically
+        if 'creation_datetime' not in record:
             record['creation_datetime'] = datetime.now()
-            incomplete_key = self._key()
-            entity = datastore.Entity(key=incomplete_key)
-            entity.update(record)
-            self.client.put(entity)
-        return None
+
+        # Instantiate the NDB model object and save it
+        entity = self.model_class(**record)
+        entity.put()
+        return entity
 
     def delete(self, identifier):
-        # https://cloud.google.com/datastore/docs/concepts/entities
-        key = self._key(identifier)
-        if key:
-            return self.client.delete(key)
-        else:
-            pass
-            # TODO: logg or throw an error
+        """
+        Deletes an entity by its numeric ID.
+        """
+        try:
+            key = ndb.Key(self.model_class, int(identifier))
+            return key.delete()
+        except (ValueError, TypeError) as e:
+            logger.error(f"Could not delete {self.model_class.__name__} with identifier {identifier}: Invalid ID. {e}")
+            return None
 
     def fetch_all(self):
-        ''' fetch data from data store '''
-        query = self.query()
-        query.order = ['-activity_date']
+        """
+        Fetches all entities of this kind.
+        Orders by 'activity_date' descending if the property exists.
+        """
+        query = self.model_class.query()
+        if hasattr(self.model_class, 'activity_date'):
+            query = query.order(-self.model_class.activity_date)
         return query.fetch()
 
     def fetch_by_username(self, username, order=None):
-        ''' fetch data from data store '''
-        query = self.query()
-        query.add_filter(filter=PropertyFilter('usernickname', '=', username))
+        """
+        Fetches entities for a specific user, with optional ordering.
+        :param order: A list of NDB properties to order by, e.g., [-Weight.weighing_date]
+        """
+        query = self.model_class.query(self.model_class.usernickname == username)
         if order:
-            query.order = order
+            for o in order:
+                query = query.order(o)
         return query.fetch()
 
     def read(self, identifier):
-        key = self._key(identifier)
-        return self.client.get(key)
+        """
+        Reads a single entity by its numeric ID.
+        """
+        try:
+            return self.model_class.get_by_id(int(identifier))
+        except (ValueError, TypeError):
+            logger.warning(f"Could not read {self.model_class.__name__}: Invalid identifier '{identifier}'.")
+            return None
 
     def update(self, record):
-        activity = None
-        record = self._sanitize_record(record)
-        with self.client.transaction():
-            # Folosim 'id' sau 'urlsafe' pentru compatibilitate temporară, dar preferăm id
-            identifier = record.get('id') or record.get('urlsafe')
-            activity = self.read(identifier)
-            if activity:
-                for key in record.keys():
-                    if key in ['urlsafe', 'id']:
-                        continue
-                    if key in activity:
-                        activity[key] = record[key]
-                self.client.put(activity)
-        return activity
+        """
+        Updates an existing entity from a dictionary.
+        The dictionary must contain an 'id'.
+        """
+        identifier = record.pop('id', None)
+        if not identifier:
+            raise ValueError(f"Record for {self.model_class.__name__} must contain an 'id' for update.")
+
+        entity = self.read(identifier)
+        if entity:
+            # Use populate to update the entity's properties from the dictionary
+            entity.populate(**record)
+            entity.put()
+        else:
+            logger.warning(f"Could not update {self.model_class.__name__}: No entity found for id {identifier}.")
+        return entity
 
 
+# Specific repositories now pass the actual model class
 class CrunchesRepository(CrudRepository):
     def __init__(self):
-        super(CrunchesRepository, self).__init__(kind='Crunch')
+        super(CrunchesRepository, self).__init__(Crunch)
 
 
 class JumpRopeRepository(CrudRepository):
     def __init__(self):
-        super(JumpRopeRepository, self).__init__(kind='JumpRope')
+        super(JumpRopeRepository, self).__init__(JumpingRope)
 
 
 class PushUpsRepository(CrudRepository):
     def __init__(self):
-        super(PushUpsRepository, self).__init__(kind='PushUp')
+        super(PushUpsRepository, self).__init__(PushUp)
 
 
 class RunRepository(CrudRepository):
     def __init__(self):
-        super(RunRepository, self).__init__(kind='Run')
+        super(RunRepository, self).__init__(Run)
 
 
 class WeightRepository(CrudRepository):
     def __init__(self):
-        super(WeightRepository, self).__init__(kind='Weight')
+        super(WeightRepository, self).__init__(Weight)
 
 
 class StatisticsRepository(Repository):
+    """
+    Repository for calculating statistics. This has been updated to work
+    with NDB model objects instead of dictionaries.
+    """
 
     def __init__(self):
         super(StatisticsRepository, self).__init__()
 
     def running_stats(self, username):
-        avg_calories = 0
-        avg_speed = 0.0
-        avg_distance = 0.0
-        avg_time = 0
-        count = 0
-        date_last_run: datetime = datetime.min
-        days_from_last_run = 0
-        max_calories = 0
-        max_distance = 0
-        max_speed = 0.0
-        max_time = 0
-        total_calories = 0
-        total_distance = 0
-        total_time = 0
-        total_speed = 0.0
-
-
         repository = RunRepository()
-        items = repository.fetch_by_username(username, order=['-activity_date', '-activity_time'])
-        count = 0
+        # The 'order' parameter now uses the NDB model property
+        items = repository.fetch_by_username(username, order=[-Run.activity_date, -Run.activity_time])
+        
+        if not items:
+            return {}
+
+        count = len(items)
+        date_last_run = items[0].activity_date
+        days_from_last_run = self._days_from_last_run(date_last_run)
+
+        total_calories = sum(item.calories for item in items if item.calories)
+        total_distance = sum(item.distance for item in items if item.distance)
+        total_time = sum(item.duration for item in items if item.duration)
+        
+        # Handle speed calculation, now accessing object properties
+        speeds = []
         for item in items:
-            if count == 0:
-                date_last_run = item['activity_date']
-                days_from_last_run = self._days_from_last_run(
-                    date_last_run)
-            count = count + 1
-            duration = item['duration']
-            if item['calories']:
-                total_calories += item['calories']
-                if item['calories'] > max_calories:
-                    max_calories = item['calories']
-            total_distance += item['distance']
-            total_time += duration
-            if item['distance'] > max_distance:
-                max_distance = item['distance']
-            if duration > max_time:
-                max_time = duration
-            speed = item['speed']
-            if item['speed'] is None:
-                speed = item['distance'] / (duration / 60.0)
-            total_speed += speed
-            if speed > max_speed:
-                max_speed = speed
-        if count > 0:
-            avg_calories = self._avg(total_calories, count)
-            avg_distance = self._avg(total_distance, count)
-            avg_time = self._avg(total_time, count)
-            avg_speed = self._avg(total_speed, count)
+            if item.speed is not None:
+                speeds.append(item.speed)
+            elif item.distance is not None and item.duration > 0:
+                speeds.append(item.distance / (item.duration / 60.0))
+        
+        total_speed = sum(speeds)
+
         return {
-            'avg_calories': avg_calories,
-            'avg_speed': avg_speed,
-            'avg_distance': avg_distance,
-            'avg_time': avg_time,
+            'avg_calories': self._avg(total_calories, count),
+            'avg_speed': self._avg(total_speed, len(speeds)) if speeds else 0.0,
+            'avg_distance': self._avg(total_distance, count),
+            'avg_time': self._avg(total_time, count),
             'count': count,
-            'date_last_run': datetime.date(date_last_run),
+            'date_last_run': date_last_run,
             'days_from_last_run': days_from_last_run,
-            'max_calories': max_calories,
-            'max_distance': max_distance,
-            'max_speed': max_speed,
-            'max_time': max_time,
+            'max_calories': max(item.calories for item in items if item.calories),
+            'max_distance': max(item.distance for item in items if item.distance),
+            'max_speed': max(speeds) if speeds else 0.0,
+            'max_time': max(item.duration for item in items if item.duration),
             'total_distance': total_distance,
             'total_time': total_time,
             'total_calories': total_calories
         }
 
     def _avg(self, total, count):
-        return float(total)/float(count)
+        if not count:
+            return 0.0
+        return float(total) / float(count)
 
     def _days_from_last_run(self, date_last_run):
         if date_last_run:
-            diff = abs(datetime.now().date() - date_last_run.date())
+            # NDB properties are already date/datetime objects
+            diff = abs(datetime.now().date() - date_last_run)
             return diff.days
         return None
 
     def weighing_stats(self, username):
-        avg = 0.0
-        avg_last20 = 0.0
-        count = 0
-        growth_rate_last20 = 0.0
-        last_weight = 0.0
-        min = 0.0
-        max = 0.0
-        trend = ''
-        total = 0.0
-        total_last20 = 0.0
-
         repository = WeightRepository()
-        items = repository.fetch_by_username(username, order=['-weighing_date'])
-        count = 0
-        for item in items:
-            if count == 0:
-                last_weight = item['weight']
-            count = count + 1
-            weight = item['weight']
-            total += weight
-            if min > weight:
-                min = weight
-            if max < weight:
-                max = weight
-            if count <= 19:
-                total_last20 = total
-        if count > 0:
-            avg_last20 = self._avg(
-                total_last20,
-                20.0 if count > 20 else float(count))
-            avg = self._avg(total, count)
-        if count > 1:
-            growth_rate_last20 = self._growth_rate(avg_last20, last_weight)
+        # Order using the NDB model property
+        items = repository.fetch_by_username(username, order=[-Weight.weighing_date])
+
+        if not items:
+            return {}
+        
+        count = len(items)
+        last_weight = items[0].weight
+        
+        all_weights = [item.weight for item in items if item.weight is not None]
+        total = sum(all_weights)
+        
+        # Calculate stats for the last 20 entries
+        last_20_weights = all_weights[:20]
+        total_last20 = sum(last_20_weights)
+        avg_last20 = self._avg(total_last20, len(last_20_weights))
+
         return {
-            'avg': avg,
+            'avg': self._avg(total, len(all_weights)),
             'avg_last20': avg_last20,
             'count': count,
-            'growth_rate_last20': growth_rate_last20,
+            'growth_rate_last20': self._growth_rate(avg_last20, last_weight),
             'last_weight': last_weight,
-            'max': max,
-            'min': min,
-            'trend': trend
+            'max': max(all_weights) if all_weights else 0.0,
+            'min': min(all_weights) if all_weights else 0.0,
+            'trend': '' # This was empty before, keeping it
         }
 
     def _growth_rate(self, avg, last):
+        if not avg or not last:
+            return 0.0
         # https://www.wikihow.com/Calculate-Growth-Rate
         return ((float(last) / float(avg)) - 1.0) * 100.0

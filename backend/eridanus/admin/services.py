@@ -27,15 +27,15 @@ class ExportDataService(object):
         csvwriter.writeheader()
         for model in items:
             csvwriter.writerow({
-                'usernickname': model.get('usernickname'), 
-                'activity_date': model.get('activity_date'),
-                'activity_time': model.get('activity_time'),
-                'duration': model.get('duration', ''),
-                'distance': model.get('distance', ''),
-                'speed': model.get('speed', ''),
-                'calories': model.get('calories', ''),
-                'notes': model.get('notes', ''),
-                'creation_datetime': model.get('creation_datetime')
+                'usernickname': model.usernickname, 
+                'activity_date': model.activity_date,
+                'activity_time': model.activity_time,
+                'duration': model.duration,
+                'distance': model.distance,
+                'speed': model.speed,
+                'calories': model.calories,
+                'notes': model.notes,
+                'creation_datetime': model.creation_datetime
                 })
         return stream.getvalue()
 

@@ -3,9 +3,10 @@ import logging
 from flask import Blueprint, flash, render_template, \
     redirect, session, request, url_for
 from flask_login import login_required
-from datetime import datetime
-from ..forms import RunningForm
-from ..services import RunningService
+from eridanus.activities.forms import RunningForm
+from eridanus.activities.services import RunningService
+from eridanus.utils.format import to_time
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,11 +16,6 @@ running_activities = Blueprint(
     'running_activities',
     __name__,
     template_folder='templates')
-
-
-def _validate_form(form):
-    ''' TODO: not yet implemented '''
-    return True
 
 
 @running_activities.route("/")
@@ -39,17 +35,14 @@ def create():
     form = RunningForm()
     try:
         if request.method == "POST":
-            if _validate_form(form):
+            if form.validate():
                 distance = float(form.distance.data)
                 duration = form.duration.data
                 speed = distance / (float(duration)/60.0)
 
                 service.create({
                         'activity_date': form.activity_date.data,
-                        'activity_time': datetime.strptime(
-                            form.activity_time.data,
-                            '%H:%M'
-                            ).time(),
+                        'activity_time': to_time(form.activity_time.data),
                         'distance': distance,
                         'duration': duration,
                         'calories': form.calories.data,
@@ -57,11 +50,11 @@ def create():
                         'speed': speed,
                         'usernickname': session['nickname']
                     })
-                flash('Activity "%s" created successfully.', 'success')
-                return redirect(url_for('running_activities.index'), 302)
-    except ValueError as exc:
+                flash('Running activity created successfully.', 'success')
+                return redirect(url_for('running_activities.index'))
+    except (ValueError, Exception) as exc:
         error_message = str(exc)
-        logger.error(error_message)
+        logger.exception(exc)
     return render_template(
         'activities/running/create.html',
         form=form,
@@ -74,7 +67,7 @@ def edit(id):
     form = RunningForm()
     try:
         if request.method == "POST":
-            if _validate_form(form):
+            if form.validate():
                 distance = float(form.distance.data)
                 duration = form.duration.data
                 speed = distance / (float(duration)/60.0)
@@ -82,32 +75,29 @@ def edit(id):
                 service.update({
                         'id': id,
                         'activity_date': form.activity_date.data,
-                        'activity_time': datetime.strptime(
-                            form.activity_time.data,
-                            '%H:%M'
-                            ).time(),
+                        'activity_time': to_time(form.activity_time.data),
                         'distance': distance,
                         'duration': duration,
                         'calories': form.calories.data,
                         'notes': form.notes.data,
                         'speed': speed
                     })
-                flash('Activity "%s" updated successfully.', 'success')
-                return redirect(url_for('running_activities.index'), 302)
+                flash('Running activity updated successfully.', 'success')
+                return redirect(url_for('running_activities.index'))
         else:
-            model = service.read(id)
-            if not model:
+            activity = service.read(id)
+            if not activity:
                 error = {'message': f"Running activity was not found for id {id}"}
                 return page_not_found(error)
-            form.activity_date.data = model['activity_date']
-            form.activity_time.data = model['activity_time'].strftime('%H:%M')
-            form.duration.data = model['duration']
-            form.calories.data = model['calories']
-            form.distance.data = model['distance']
-            form.notes.data = model['notes']
-    except ValueError as exc:
+            form.activity_date.data = activity.activity_date
+            form.activity_time.data = activity.activity_time.strftime('%H:%M')
+            form.duration.data = activity.duration
+            form.calories.data = activity.calories
+            form.distance.data = activity.distance
+            form.notes.data = activity.notes
+    except (ValueError, Exception) as exc:
         error_message = str(exc)
-    # logging.info('Form duration: {}, activity duration {}'.format(form.activity_time.data, activity.activity_time))
+        logger.exception(exc)
     return render_template(
         'activities/running/edit.html',
         id=id,

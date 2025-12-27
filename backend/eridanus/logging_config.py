@@ -27,10 +27,10 @@ def configure_logging():
                 }
             },
             "loggers": {
-                "eridanus": {"level": "INFO", "propagate": True},
-                "main": {"level": "INFO", "propagate": True},
-                "__main__": {"level": "INFO", "propagate": True},
-                "werkzeug": {"level": "INFO", "propagate": True},
+                "eridanus": {"level": level_name, "propagate": True},
+                "main": {"level": level_name, "propagate": True},
+                "__main__": {"level": level_name, "propagate": True},
+                "werkzeug": {"level": level_name, "propagate": True},
             },
             "root": {"level": level_name, "handlers": ["stdout"]},
         }

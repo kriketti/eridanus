@@ -14,7 +14,7 @@ def to_date(date_value: str, format: str) -> date:
     return datetime.strptime(date_value, format).date()
 
 
-def to_time(time_value: str, format: str) -> time:
+def to_time(time_value: str, format: str='%H:%M') -> time:
     return datetime.strptime(time_value, format).time()
 
 

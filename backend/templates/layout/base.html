@@ -42,7 +42,18 @@
             </nav>
             {% endblock %}
         </div>
-        <div id="content" class="container-fluid">{% block content %}{% endblock %}</div>
+        <div id="content" class="container-fluid">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}</div>
         <div id="footer"></div>
     </body>
     {% block scripts %}
