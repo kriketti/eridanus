@@ -15,17 +15,23 @@ indexes:
   - name: usernickname
   - name: activity_date
     direction: desc
+  - name: activity_time
+    direction: desc
 
 - kind: PushUp
   properties:
   - name: usernickname
   - name: activity_date
     direction: desc
+  - name: activity_time
+    direction: desc
 
 - kind: Run
   properties:
   - name: usernickname
   - name: activity_date
+    direction: desc
+  - name: activity_time
     direction: desc
 
 - kind: Weight

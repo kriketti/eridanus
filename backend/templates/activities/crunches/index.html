@@ -32,7 +32,7 @@
 
 {% for item in viewmodel['items'] %}
 <div class="detail">
-    {{ item.activity_date }} {{ item.activity_time }}
+    <a href="{{ url_for('crunches.edit', id=item.id) }}">{{ item.activity_date }} {{ item.activity_time }}</a>
     {% if item.duration %}
     <br />
     <strong class="value">{{ item.duration }}</strong> min

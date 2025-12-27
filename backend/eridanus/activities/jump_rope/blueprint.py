@@ -1,13 +1,12 @@
 import logging
 
-from datetime import datetime
 from flask import Blueprint, flash, redirect, \
     render_template, request, session, url_for
 from flask_login import login_required
 from eridanus.activities.forms import JumpRopeForm
 from eridanus.activities.services import JumpRopeService
 from eridanus.utils.form import validate_form
-from eridanus.utils.format import to_time
+from eridanus.utils.format import to_time, format_time
 
 
 logger = logging.getLogger(__name__)
@@ -49,7 +48,7 @@ def create():
                     'usernickname': session['nickname']
                     })
                 flash('Jump rope activity "%s" created successfully.', 'success')
-                return redirect(url_for('jump_rope_activities.index'), 302)
+                return redirect(url_for('jump_rope_activities.index'))
     except (ValueError, Exception) as exc:
         error_message = str(exc)
         logger.exception(error_message)
@@ -64,17 +63,17 @@ def view(id):
     model = service.read(id)
     if model:
         return render_template('activities/jump_rope/view.html', model=model)
-    return redirect(url_for('app.page_not_found', 302))
+    return redirect(url_for('app.page_not_found'))
 
 
-@jump_rope_activities.route("/<activity_id>/edit", methods=['GET', 'POST'])
+@jump_rope_activities.route("/edit/<id>/", methods=['GET', 'POST'])
 @login_required
-def edit(activity_id):
+def edit(id):
     form = JumpRopeForm()
     if request.method == 'POST':
         if validate_form(form):
             service.update({
-                'id': activity_id,
+                'id': id,
                 'activity_date': form.activity_date.data,
                 'activity_time': to_time(form.activity_time.data,'%H:%M'),
                 'calories': form.calories.data,
@@ -84,15 +83,21 @@ def edit(activity_id):
                 'user_nickname': session['nickname']
             })
             flash('Jump rope activity "%s" saved successfully.', 'success')
-            return redirect(url_for('jump_rope_activities.index'), 302)
-    activity = service.read(activity_id)
+            return redirect(url_for('jump_rope_activities.index'))
+    activity = service.read(id)
     if activity:
         form = JumpRopeForm()
         form.activity_date.data = activity['activity_date']
+        form.activity_time.data = activity['activity_time'].strftime('%H:%M')
+        form.calories.data = activity['calories']
+        form.count.data = activity['count']
+        form.duration.data = activity['duration']
+        form.notes.data = activity['notes']
         return render_template(
             'activities/jump_rope/edit.html',
+            id=id,
             form=form)
-    error = {'message': f"Jump rope activity was not found for id {activity_id}"}
+    error = {'message': f"Jump rope activity was not found for id {id}"}
     return page_not_found(error)
 
 
@@ -100,7 +105,7 @@ def edit(activity_id):
 def delete(activity_id):
     service.delete(activity_id)
     flash('Jump rope activity "%s" saved successfully.', 'success')
-    return redirect(url_for('jump_rope_activities.index'), 302)
+    return redirect(url_for('jump_rope_activities.index'))
 
 
 @jump_rope_activities.errorhandler(404)

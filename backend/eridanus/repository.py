@@ -6,6 +6,7 @@ from eridanus.models import Crunch, Run, Weight, PushUp
 from eridanus.utils.format import format_date
 
 from google.cloud import datastore
+from google.cloud.datastore.query import PropertyFilter
 from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ class CrudRepository(Repository):
     def fetch_by_username(self, username, order=None):
         ''' fetch data from data store '''
         query = self.query()
-        query.add_filter('usernickname', '=', username)
+        query.add_filter(filter=PropertyFilter('usernickname', '=', username))
         if order:
             query.order = order
         return query.fetch()
@@ -145,7 +146,7 @@ class StatisticsRepository(Repository):
 
 
         repository = RunRepository()
-        items = repository.fetch_by_username(username, order=['-activity_date'])
+        items = repository.fetch_by_username(username, order=['-activity_date', '-activity_time'])
         count = 0
         for item in items:
             if count == 0:

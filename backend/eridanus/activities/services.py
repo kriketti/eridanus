@@ -14,7 +14,7 @@ class BaseActivityService(CrudService):
 
     def fetch_all(self, username):
         items = []
-        models = self.repository.fetch_by_username(username, order=['-activity_date'])
+        models = self.repository.fetch_by_username(username, order=['-activity_date', '-activity_time'])
         if models is not None:
             for model in models:
                 item = {'activity_time': format_time(model['activity_time']),
@@ -68,7 +68,7 @@ class RunningService(CrudService):
 
     def _fetch_all(self, username):
         items = []
-        models = self.repository.fetch_by_username(username, order=['-activity_date'])
+        models = self.repository.fetch_by_username(username, order=['-activity_date', '-activity_time'])
         for model in models:
             print(str(model))
             duration = model['duration']
