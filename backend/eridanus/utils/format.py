@@ -1,4 +1,4 @@
-from ..constants import ERIDANUS_DATE_FORMAT, ERIDANUS_TIME_FORMAT
+from eridanus.constants import ERIDANUS_DATE_FORMAT, ERIDANUS_TIME_FORMAT
 from datetime import datetime, date, time
 
 

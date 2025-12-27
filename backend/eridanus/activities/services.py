@@ -1,9 +1,9 @@
 import logging
 
-from ..utils.format import format_date, format_time
-from ..services import CrudService
-from ..repository import CrunchesRepository, JumpRopeRepository, PushUpsRepository, RunRepository
-from ..models import Activity, Run # Import models for ordering
+from eridanus.utils.format import format_date, format_time
+from eridanus.services import CrudService
+from eridanus.repository import CrunchesRepository, JumpRopeRepository, PushUpsRepository, RunRepository
+from eridanus.models import Activity, Run # Import models for ordering
 
 logger = logging.getLogger(__name__)
 

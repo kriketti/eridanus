@@ -2,8 +2,8 @@ import logging
 
 from eridanus.repository import WeightRepository
 from eridanus.models import Weight
-from ..services import CrudService
-from ..utils.format import format_date
+from eridanus.services import CrudService
+from eridanus.utils.format import format_date
 
 logger = logging.getLogger(__name__)
 

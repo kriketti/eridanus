@@ -4,9 +4,9 @@ from flask import Blueprint, flash, render_template, \
     redirect, request, session, url_for
 from flask_login import login_required
 
-from ..models import Weight
-from .forms import WeightForm
-from .services import WeighingService
+from eridanus.models import Weight
+from eridanus.weighing.forms import WeightForm
+from eridanus.weighing.services import WeighingService
 
 logger = logging.getLogger(__name__)
 

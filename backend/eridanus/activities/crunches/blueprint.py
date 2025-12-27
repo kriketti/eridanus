@@ -3,8 +3,8 @@ import logging
 from flask import Blueprint, flash, \
     redirect, render_template, request, session, url_for
 from flask_login import login_required
-from ..forms import CrunchesForm
-from ..services import CrunchesService
+from eridanus.activities.forms import CrunchesForm
+from eridanus.activities.services import CrunchesService
 from eridanus.utils.format import to_time
 
 logger = logging.getLogger(__name__)
