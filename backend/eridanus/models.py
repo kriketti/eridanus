@@ -34,5 +34,5 @@ class Crunch(Activity):
     count = ndb.IntegerProperty()
 
 
-class JumpingRope(Activity):
+class JumpRope(Activity):
     count = ndb.IntegerProperty()

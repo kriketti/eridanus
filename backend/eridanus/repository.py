@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from google.cloud import ndb
 
-from eridanus.models import Crunch, Run, Weight, PushUp, JumpingRope
+from eridanus.models import Crunch, Run, Weight, PushUp, JumpRope
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +113,7 @@ class CrunchesRepository(CrudRepository):
 
 class JumpRopeRepository(CrudRepository):
     def __init__(self):
-        super(JumpRopeRepository, self).__init__(JumpingRope)
+        super(JumpRopeRepository, self).__init__(JumpRope)
 
 
 class PushUpsRepository(CrudRepository):

@@ -130,3 +130,7 @@ Oh, man, it's working!! Imi vine sa te pup! Multumesc, mult! Cum fac deploymentu
   - tests/test_repository_crud.py
 
   Dacă vrei, pot adăuga și teste pentru rute Flask (cu auth IAP fake) sau pentru alte repo‑uri.
+
+
+# Update indexes
+gcloud datastore indexes create index.yaml --project eridanus-gae
